@@ -9,7 +9,11 @@ while true
 do
 	while true
 	do
-		rm -rf temp ip.txt data.txt meta.txt log.txt temp.txt
+		declare -i m
+		declare -i n
+		declare -i per
+		rm -rf icmp temp data.txt meta.txt log.txt anycast.txt temp.txt
+		mkdir icmp
 		while true
 		do
 			if [ -f "resolve.txt" ]
@@ -65,12 +69,43 @@ do
 		fi
 		for i in `cat data.txt | sed '1,4d'`
 		do
-			echo $i>>ip.txt
+			echo $i>>anycast.txt
 		done
 		rm -rf meta.txt data.txt
-		./fping -f ip.txt -c 10 -i 0 > fping.txt
-		sort -t/ -n -k 5 -k 8 fping.txt | cut -f 1 -d: | sed '21,$d' > ip.txt
-		rm -rf fping.txt
+		m=$(cat anycast.txt | wc -l)
+		for i in `cat anycast.txt`
+		do
+			ping -c 10 -i 1 -n -q $i > icmp/$n.log&
+			n=$[$n+1]
+			per=$n*100/$m
+			while true
+			do
+				p=$(ps -ef | grep ping | grep -v "grep" | wc -l)
+				if [ $p -ge 100 ]
+				then
+					echo 正在测试 ICMP 丢包率:进程数 $p,已完成 $per %
+					sleep 1
+				else
+					echo 正在测试 ICMP 丢包率:进程数 $p,已完成 $per %
+					break
+				fi
+			done
+		done
+		rm -rf anycast.txt
+		while true
+		do
+			p=$(ps | grep ping | grep -v "grep" | wc -l)
+			if [ $p -ne 0 ]
+			then
+				echo 等待 ICMP 进程结束:剩余进程数 $p
+				sleep 1
+			else
+				echo ICMP 丢包率测试完成
+				break
+			fi
+		done
+		cat icmp/*.log | grep 'statistics\|loss\|avg' | sed 'N;N;s/\n/ /g' | awk -F, '{print $1,$3}' | awk '{print $2,$9,$15}' | awk -F% '{print $1,$2}' | awk -F/ '{print $1,$2}' | awk '{print $2,$4,$1}' | sort -n | awk '{print $3}' | sed '21,$d' > ip.txt
+		rm -rf icmp
 		echo 选取20个丢包率最少的IP地址下载测速
 		mkdir temp
 		for i in `cat ip.txt`
@@ -83,7 +118,6 @@ do
 		echo 测速完成
 		ls -S temp > ip.txt
 		rm -rf temp
-		declare -i n
 		n=$(wc -l ip.txt | awk '{print $1}')
 		if [ $n -ge 3 ]; then
 			first=$(sed -n '1p' ip.txt)
