@@ -1,0 +1,24 @@
+name: Fork News
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch: # on button click
+  
+jobs:
+  fork-news:
+    runs-on: ubuntu-latest
+    name: Sync with parent repository
+    steps:
+      - id: fork-news-sync
+        uses: vitornovictor/fork-news@v1.0.0
+        with:
+          from-branch: master
+          to-branch: master
+          access-token: ${{ secrets.GITHUB_TOKEN  }}
+          
+      - name: Delete workflow runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          repository: ${{ github.repository }}
+          retain_days: 3
+          keep_minimum_runs: ${{ github.event.inputs.minimum_runs }}
