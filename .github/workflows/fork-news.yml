@@ -14,7 +14,7 @@ jobs:
         with:
           from-branch: master
           to-branch: master
-          access-token: ${{ secrets.GITHUB_TOKEN  }}
+          access-token: ${{ secrets.RELEASES_TOKEN  }}
           
       - name: Delete workflow runs
         uses: GitRML/delete-workflow-runs@main
