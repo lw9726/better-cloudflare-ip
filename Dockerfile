@@ -23,7 +23,7 @@ RUN apk del .build-deps
 
 FROM alpine:3.11
 
-LABEL maintainer="fengying0347@163.com" 
+#LABEL maintainer="fengying0347@163.com" 
 
 RUN  sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 	
